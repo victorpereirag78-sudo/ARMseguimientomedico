@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARM Seguimiento Médico</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d9488'/><path d='M16 8v16M8 16h16' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <div id="app-shell">
+
+    <!-- ── Botón de menú (solo mobile) ── -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="app.toggleSidebar()" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="app.toggleSidebar()"></div>
+
+    <!-- ── Sidebar (renderizado por JS) ── -->
+    <aside id="sidebar"></aside>
+
+    <!-- ── Contenido principal ── -->
+    <main id="app-main">
+
+      <!-- Banner demo -->
+      <div class="demo-banner" id="demo-banner">
+        <span class="demo-banner-tag">Prototipo Demostrativo</span>
+        No utilizar para ingresar datos reales de pacientes.
+      </div>
+
+      <!-- Vista activa (dashboard, pacientes, alertas, etc.) -->
+      <div id="app-view">
+        <div class="page-loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- ── Scripts externos ── -->
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Chart.js para gráficos de evolución -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- jsPDF + autotable para exportación de fichas/reportes en PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Configuración -->
+  <script src="js/config.js"></script>
+
+  <!-- App principal (módulo ES) -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

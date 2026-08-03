@@ -1,0 +1,99 @@
+/* ============================================================
+   ARM Seguimiento Médico — Design Tokens
+   ============================================================ */
+:root {
+  /* ── Brand / Primary ── */
+  --brand:        #0d9488;
+  --brand-hover:  #0f766e;
+  --brand-dark:   #0a7060;
+  --brand-light:  #ccfbf1;
+  --brand-bg:     #e6f7f5;
+
+  /* ── Sidebar ── */
+  --sb-bg:          #1e3535;
+  --sb-hover:       #274848;
+  --sb-active:      #305252;
+  --sb-text:        #8bbfbf;
+  --sb-text-active: #ffffff;
+  --sb-icon:        #5fa0a0;
+  --sb-icon-active: #4fd1c5;
+  --sb-border:      rgba(255,255,255,0.07);
+  --sb-width:       265px;
+
+  /* ── Backgrounds ── */
+  --bg-page:  #eef5f5;
+  --bg-card:  #ffffff;
+  --bg-hover: #f5fbfb;
+  --bg-input: #f8fafa;
+  --bg-dim:   rgba(0,0,0,0.45);
+
+  /* ── Text ── */
+  --tx-1: #0f172a;
+  --tx-2: #334155;
+  --tx-3: #64748b;
+  --tx-4: #94a3b8;
+
+  /* ── Borders ── */
+  --bd:       #e2e8f0;
+  --bd-light: #f1f5f9;
+  --bd-focus: #0d9488;
+
+  /* ── Status ── */
+  --ok:       #10b981;   --ok-bg:       #d1fae5;   --ok-text:       #065f46;
+  --warn:     #f59e0b;   --warn-bg:     #fef3c7;   --warn-text:     #92400e;
+  --alert:    #ef4444;   --alert-bg:    #fee2e2;   --alert-text:    #991b1b;
+  --info:     #3b82f6;   --info-bg:     #dbeafe;   --info-text:     #1e40af;
+  --neutral:  #64748b;   --neutral-bg:  #f1f5f9;   --neutral-text:  #334155;
+  --purple:   #8b5cf6;   --purple-bg:   #ede9fe;   --purple-text:   #5b21b6;
+
+  /* ── Typography ── */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+
+  /* Font sizes */
+  --f-xs:   0.6875rem;  /* 11px */
+  --f-sm:   0.8125rem;  /* 13px */
+  --f-base: 0.9375rem;  /* 15px */
+  --f-lg:   1.0625rem;  /* 17px */
+  --f-xl:   1.1875rem;  /* 19px */
+  --f-2xl:  1.375rem;   /* 22px */
+  --f-3xl:  1.75rem;    /* 28px */
+  --f-4xl:  2.25rem;    /* 36px */
+
+  /* Weights */
+  --fw-r: 400;
+  --fw-m: 500;
+  --fw-sb: 600;
+  --fw-b: 700;
+
+  /* ── Spacing ── */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.25rem;
+  --s-6: 1.5rem;
+  --s-8: 2rem;
+  --s-10: 2.5rem;
+  --s-12: 3rem;
+
+  /* ── Radii ── */
+  --r-xs:   4px;
+  --r-sm:   7px;
+  --r-md:   11px;
+  --r-lg:   15px;
+  --r-xl:   20px;
+  --r-full: 9999px;
+
+  /* ── Shadows ── */
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --sh-sm: 0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --sh:    0 2px 10px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  --sh-lg: 0 8px 28px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.04);
+  --sh-brand: 0 4px 14px rgba(13,148,136,0.32);
+
+  /* ── Transitions ── */
+  --t:    0.14s ease;
+  --t-md: 0.25s ease;
+  --t-lg: 0.35s ease;
+}

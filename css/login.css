@@ -1,0 +1,338 @@
+/* ============================================================
+   ARM Seguimiento Médico — Login Page
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--tx-1);
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ── Layout split ── */
+.login-wrap {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── Left: Brand panel ── */
+.login-brand {
+  width: 44%;
+  background: var(--sb-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-brand::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-brand::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(79,209,197,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lb-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.lb-logo-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--brand);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lb-logo-icon svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.lb-logo-text { line-height: 1.2; }
+.lb-logo-text strong { display: block; font-size: var(--f-xl); font-weight: var(--fw-b); color: #fff; }
+.lb-logo-text span { font-size: var(--f-sm); color: var(--sb-text); font-weight: var(--fw-m); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.lb-content { position: relative; z-index: 1; }
+
+.lb-headline {
+  font-size: var(--f-3xl);
+  font-weight: var(--fw-b);
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: var(--s-4);
+}
+
+.lb-headline span { color: var(--sb-icon-active); }
+
+.lb-subtitle {
+  font-size: var(--f-base);
+  color: var(--sb-text);
+  line-height: 1.6;
+  margin-bottom: var(--s-8);
+  max-width: 340px;
+}
+
+.lb-features { list-style: none; display: flex; flex-direction: column; gap: var(--s-4); }
+
+.lb-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.lb-feature-icon {
+  width: 34px;
+  height: 34px;
+  background: rgba(13,148,136,0.20);
+  border: 1px solid rgba(13,148,136,0.25);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.lb-feature-icon svg { width: 17px; height: 17px; stroke: var(--brand-light); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.lb-feature-text strong { display: block; font-size: var(--f-sm); font-weight: var(--fw-sb); color: #fff; }
+.lb-feature-text p { font-size: var(--f-xs); color: var(--sb-text); margin-top: 2px; line-height: 1.4; }
+
+.lb-footer {
+  font-size: var(--f-xs);
+  color: rgba(255,255,255,0.3);
+}
+
+/* ── Right: Form panel ── */
+.login-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-form-box {
+  width: 100%;
+  max-width: 420px;
+}
+
+.lf-header { margin-bottom: var(--s-8); }
+.lf-header h1 { font-size: var(--f-3xl); font-weight: var(--fw-b); color: var(--tx-1); }
+.lf-header p { font-size: var(--f-base); color: var(--tx-3); margin-top: var(--s-1); }
+
+/* Role selector */
+.role-tabs {
+  display: flex;
+  gap: var(--s-2);
+  margin-bottom: var(--s-6);
+  background: var(--bg-input);
+  border: 1px solid var(--bd);
+  border-radius: var(--r-md);
+  padding: var(--s-1);
+}
+
+.role-tab {
+  flex: 1;
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  font-family: var(--font);
+  font-size: var(--f-sm);
+  font-weight: var(--fw-m);
+  color: var(--tx-3);
+  cursor: pointer;
+  transition: all var(--t);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.role-tab.active {
+  background: var(--bg-card);
+  color: var(--tx-1);
+  font-weight: var(--fw-sb);
+  box-shadow: var(--sh-sm);
+}
+
+.role-tab svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* Form fields */
+.form-group { margin-bottom: var(--s-5); }
+.form-label { display: block; font-size: var(--f-sm); font-weight: var(--fw-m); color: var(--tx-2); margin-bottom: var(--s-2); }
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem var(--s-4);
+  background: var(--bg-input);
+  border: 1.5px solid var(--bd);
+  border-radius: var(--r-sm);
+  font-family: var(--font);
+  font-size: var(--f-base);
+  color: var(--tx-1);
+  transition: border-color var(--t), box-shadow var(--t);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--bd-focus);
+  box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+}
+
+.form-input::placeholder { color: var(--tx-4); }
+
+.form-input-wrap { position: relative; }
+.form-input-wrap .form-input { padding-right: 3rem; }
+.form-toggle-pass {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--tx-3);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.form-toggle-pass svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: var(--font);
+  font-size: var(--f-base);
+  font-weight: var(--fw-sb);
+  cursor: pointer;
+  transition: background var(--t), transform var(--t), box-shadow var(--t);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--brand-hover);
+  box-shadow: var(--sh-brand);
+  transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+
+.btn-submit.loading .btn-spinner { display: block; }
+.btn-submit.loading .btn-text { display: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Extras */
+.form-forgot {
+  display: block;
+  text-align: right;
+  font-size: var(--f-xs);
+  color: var(--tx-3);
+  text-decoration: none;
+  margin-top: var(--s-2);
+  transition: color var(--t);
+}
+.form-forgot:hover { color: var(--brand); }
+
+.form-error {
+  background: var(--alert-bg);
+  border: 1px solid var(--alert);
+  color: var(--alert-text);
+  border-radius: var(--r-sm);
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--f-sm);
+  margin-top: var(--s-4);
+  display: none;
+}
+.form-error.visible { display: block; }
+
+.field-error-inline {
+  color: var(--alert);
+  font-size: var(--f-xs);
+  margin-top: 4px;
+  display: block;
+}
+.form-input.error { border-color: var(--alert); }
+
+.form-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-6) 0;
+  color: var(--tx-4);
+  font-size: var(--f-xs);
+}
+.form-divider::before,
+.form-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bd);
+}
+
+.lf-demo-note {
+  background: var(--brand-bg);
+  border: 1px solid var(--brand-light);
+  border-radius: var(--r-sm);
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--f-xs);
+  color: var(--brand-hover);
+  margin-top: var(--s-5);
+  line-height: 1.5;
+}
+
+.lf-demo-note strong { display: block; margin-bottom: 2px; font-weight: var(--fw-sb); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .login-brand { display: none; }
+  .login-form-panel { padding: var(--s-6) var(--s-5); align-items: flex-start; padding-top: 4rem; }
+}

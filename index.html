@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARM Seguimiento Médico — Acceso</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d9488'/><path d='M16 8v16M8 16h16' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+  <div class="login-wrap">
+
+    <!-- ── Panel Izquierdo: Branding ── -->
+    <div class="login-brand">
+      <div class="lb-logo">
+        <div class="lb-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3 6 12H2"/></svg>
+        </div>
+        <div class="lb-logo-text">
+          <strong>ARM Seguimiento</strong>
+          <span>Médico Integral</span>
+        </div>
+      </div>
+
+      <div class="lb-content">
+        <h2 class="lb-headline">Seguimiento clínico<br><span>inteligente</span> y seguro</h2>
+        <p class="lb-subtitle">
+          Monitoree la evolución de sus pacientes en tiempo real, gestione tratamientos y reciba alertas de forma proactiva.
+        </p>
+        <ul class="lb-features">
+          <li class="lb-feature">
+            <div class="lb-feature-icon">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="lb-feature-text">
+              <strong>Gestión de pacientes</strong>
+              <p>Fichas clínicas completas, historial y evolución médica centralizada.</p>
+            </div>
+          </li>
+          <li class="lb-feature">
+            <div class="lb-feature-icon">
+              <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="lb-feature-text">
+              <strong>Monitoreo continuo</strong>
+              <p>Presión arterial, glicemia, peso y más — con gráficos de evolución.</p>
+            </div>
+          </li>
+          <li class="lb-feature">
+            <div class="lb-feature-icon">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div class="lb-feature-text">
+              <strong>Alertas inteligentes</strong>
+              <p>Reciba notificaciones cuando un paciente requiere atención inmediata.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="lb-footer">
+        ARM Sistemas · Santiago, Chile · v1.0
+      </div>
+    </div>
+
+    <!-- ── Panel Derecho: Formulario ── -->
+    <div class="login-form-panel">
+      <div class="login-form-box">
+        <div class="lf-header">
+          <h1>Bienvenido</h1>
+          <p>Ingrese sus credenciales para acceder</p>
+        </div>
+
+        <!-- Selector de rol -->
+        <div class="role-tabs">
+          <button class="role-tab active" data-role="medico" onclick="selectRole(this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Médico
+          </button>
+          <button class="role-tab" data-role="paciente" onclick="selectRole(this)">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Paciente
+          </button>
+          <button class="role-tab" data-role="admin" onclick="selectRole(this)">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Administrador
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Correo electrónico</label>
+          <input
+            type="email"
+            id="email"
+            class="form-input"
+            placeholder="doctor@clinica.cl"
+            autocomplete="email"
+            required
+          >
+          <span id="email-error" class="field-error-inline" style="display:none"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña</label>
+          <div class="form-input-wrap">
+            <input
+              type="password"
+              id="password"
+              class="form-input"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" class="form-toggle-pass" onclick="togglePass()">
+              <svg id="eye-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <a href="#" class="form-forgot">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div id="error-msg" class="form-error"></div>
+
+        <button class="btn-submit" id="btn-login" onclick="handleLogin()">
+          <span class="btn-text">Ingresar</span>
+          <div class="btn-spinner"></div>
+        </button>
+
+        <div class="lf-demo-note">
+          <strong>Credenciales de demostración</strong>
+          Médico: <b>doctor@arm.cl</b> / <b>demo1234</b><br>
+          Paciente: <b>paciente@arm.cl</b> / <b>demo1234</b><br>
+          Admin: <b>admin@arm.cl</b> / <b>demo1234</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    let selectedRole = 'medico';
+    let showingPassword = false;
+
+    function selectRole(btn) {
+      document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRole = btn.dataset.role;
+      const placeholders = { medico: 'doctor@clinica.cl', paciente: 'paciente@clinica.cl', admin: 'admin@clinica.cl' };
+      document.getElementById('email').placeholder = placeholders[selectedRole];
+    }
+
+    function togglePass() {
+      const input = document.getElementById('password');
+      showingPassword = !showingPassword;
+      input.type = showingPassword ? 'text' : 'password';
+    }
+
+    // ── Validación en vivo del correo ──
+    function isValidEmailFormat(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+    }
+
+    function checkEmailField() {
+      const input = document.getElementById('email');
+      const err = document.getElementById('email-error');
+      const val = input.value.trim();
+      if (!val || isValidEmailFormat(val)) {
+        input.classList.remove('error');
+        err.style.display = 'none';
+      } else {
+        input.classList.add('error');
+        err.textContent = 'Correo electrónico inválido';
+        err.style.display = 'block';
+      }
+    }
+
+    document.getElementById('email').addEventListener('blur', checkEmailField);
+    document.getElementById('email').addEventListener('input', function() {
+      if (this.classList.contains('error')) checkEmailField();
+    });
+
+    async function handleLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('btn-login');
+      const errorEl = document.getElementById('error-msg');
+
+      if (!email || !password) {
+        showError('Por favor ingresa tu correo y contraseña.');
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      errorEl.classList.remove('visible');
+
+      try {
+        // ── MODO DEMO: activo si DEMO_MODE=true en config.js, o si Supabase no está configurado ──
+        const isDemoMode = (typeof DEMO_MODE !== 'undefined' && DEMO_MODE)
+                        || !SUPABASE_URL
+                        || SUPABASE_URL === 'YOUR_SUPABASE_URL';
+
+        if (isDemoMode) {
+          await new Promise(r => setTimeout(r, 700)); // simular delay de red
+
+          const DEMO_USERS = {
+            'doctor@arm.cl':   { password: 'demo1234', role: 'medico',   nombre: 'Dr. Diego Canqui' },
+            'paciente@arm.cl': { password: 'demo1234', role: 'paciente', nombre: 'María González', paciente_id: 'p1' },
+            'admin@arm.cl':    { password: 'demo1234', role: 'admin',    nombre: 'Admin ARM Sistemas' },
+          };
+
+          const found = DEMO_USERS[email.toLowerCase()];
+
+          if (!found || found.password !== password) {
+            showError('Credenciales incorrectas.\nMédico: doctor@arm.cl / demo1234\nPaciente: paciente@arm.cl / demo1234\nAdmin: admin@arm.cl / demo1234');
+            return;
+          }
+
+          if (found.role !== selectedRole) {
+            showError(`Esta cuenta es de tipo "${found.role}". Selecciona la pestaña correcta.`);
+            return;
+          }
+
+          localStorage.setItem('arm_demo_user', JSON.stringify({ role: found.role, nombre: found.nombre, email, paciente_id: found.paciente_id }));
+          window.location.href = 'app.html';
+          return;
+        }
+
+        // ── SUPABASE REAL ──
+        if (!supabaseClient) {
+          showError('Error de configuración: cliente Supabase no inicializado.');
+          return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        // Verificar rol en tabla profiles
+        const { data: profile, error: profileError } = await supabaseClient
+          .from('profiles')
+          .select('role, nombre_completo')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          await supabaseClient.auth.signOut();
+          throw new Error('Perfil no encontrado. Contacta al administrador.');
+        }
+
+        if (profile.role !== selectedRole && profile.role !== 'admin') {
+          await supabaseClient.auth.signOut();
+          throw new Error(`Esta cuenta es de tipo "${profile.role}". Selecciona la pestaña correcta.`);
+        }
+
+        window.location.href = 'app.html';
+
+      } catch (err) {
+        showError(err.message || 'Error al iniciar sesión. Intenta nuevamente.');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+
+    // Enter key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    // Revisar sesión existente al cargar la página
+    (async () => {
+      // Si hay sesión demo guardada → ir directo a la app
+      if (localStorage.getItem('arm_demo_user')) {
+        window.location.href = 'app.html';
+        return;
+      }
+      // Si no es modo demo y Supabase está configurado → revisar sesión real
+      const isDemoMode = (typeof DEMO_MODE !== 'undefined' && DEMO_MODE)
+                      || !SUPABASE_URL
+                      || SUPABASE_URL === 'YOUR_SUPABASE_URL';
+      if (!isDemoMode && supabaseClient) {
+        try {
+          const { data } = await supabaseClient.auth.getSession();
+          if (data?.session) window.location.href = 'app.html';
+        } catch (e) { /* sin sesión activa */ }
+      }
+    })();
+  </script>
+</body>
+</html>
