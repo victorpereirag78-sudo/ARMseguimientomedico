@@ -443,8 +443,14 @@ window._fichaGuardar = function() {
     peso_kg:              parseFloat(_fichaData.peso) || 0,
     talla_cm:             parseFloat(_fichaData.talla) || 0,
     contacto_emergencia:  _fichaData.contacto || '',
-    consentimiento_informado: true,
-    fecha_consentimiento:     hoy.toISOString(),
+    consentimientos: [{
+      id: 'cons_' + Date.now(),
+      version_documento: '1.0',
+      aceptado: true,
+      fecha_aceptacion: hoy.toISOString(),
+      registrado_por_nombre: `${window._db.currentUser?.nombre || 'Médico tratante'} (médico)`,
+      revocado: false,
+    }],
     plan_nombre:          `${planNombres[_fichaData.plan_tipo]} · ${dias} días`,
     plan_tipo:            _fichaData.plan_tipo,
     plan_inicio:          _fichaData.inicio || hoy.toISOString().split('T')[0],
@@ -477,7 +483,10 @@ window._fichaGuardar = function() {
   auditLog('pacientes', 'INSERT', newPatient.id, {
     paciente: newPatient.nombre,
     diagnostico: newPatient.diagnostico_principal,
-    consentimiento_informado: newPatient.consentimiento_informado,
+  });
+  auditLog('consentimientos', 'INSERT', newPatient.consentimientos[0].id, {
+    paciente: newPatient.nombre,
+    version: newPatient.consentimientos[0].version_documento,
   });
 
   // Actualizar stats
@@ -510,7 +519,7 @@ export function showNuevoRegistroModal(patientId, actor = 'medico') {
         <div>
           <h2 class="modal-title">Nuevo registro vital</h2>
           <div style="font-size:var(--f-xs);color:var(--tx-3);margin-top:2px">
-            ${actor === 'paciente' ? 'Ingresado por ti' : 'Ingresado por el médico'} — ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}
+            ${actor === 'paciente' ? 'Ingresado por ti' : actor === 'enfermera' ? 'Ingresado por enfermería' : 'Ingresado por el médico'} — ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}
           </div>
         </div>
         <button class="modal-close" onclick="closeModal()">
@@ -996,4 +1005,101 @@ window._guardarEvolucion = function(patientId) {
 
   if (window.selectPatient) window.selectPatient(patientId);
   window._refreshPacienteView?.(patientId);
+};
+
+// ════════════════════════════════════════════════════════════
+//  4. MEDICAMENTOS — historial append-only (nunca se sobrescribe)
+// ════════════════════════════════════════════════════════════
+
+export function showNuevoMedicamentoModal(patientId) {
+  const p = (window._db.MOCK_PATIENTS || []).find(pt => pt.id === patientId);
+  if (!p) { app.showToast('Paciente no encontrado', 'error'); return; }
+
+  openModal(`
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h2 class="modal-title">Nuevo medicamento</h2>
+        <button class="modal-close" onclick="closeModal()">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="patient-badge" style="margin-bottom:var(--s-4)">
+          <div class="avatar avatar-sm" style="background:${p.avatar_bg}">${p.avatar}</div>
+          <div><div style="font-weight:var(--fw-sb);font-size:var(--f-sm)">${p.nombre}</div></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="input-group" style="grid-column:span 2">
+            <label class="input-label" for="med-nombre">Medicamento <span style="color:var(--alert)">*</span></label>
+            <input class="input" id="med-nombre" placeholder="Ej: Losartán 50 mg">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="med-frecuencia">Frecuencia <span style="color:var(--alert)">*</span></label>
+            <input class="input" id="med-frecuencia" placeholder="Ej: Cada 12 horas">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="med-horarios">Horarios</label>
+            <input class="input" id="med-horarios" placeholder="08:00, 20:00">
+          </div>
+          <div class="input-group" style="grid-column:span 2">
+            <label class="input-label" for="med-indicaciones">Indicaciones</label>
+            <textarea class="textarea" id="med-indicaciones" rows="2" placeholder="Ej: Tomar con alimentos"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="window._guardarNuevoMedicamento('${p.id}')">Guardar</button>
+      </div>
+    </div>
+  `);
+}
+
+window._guardarNuevoMedicamento = function(patientId) {
+  const p = window._db.MOCK_PATIENTS.find(pt => pt.id === patientId);
+  if (!p) return;
+
+  const nombre = document.getElementById('med-nombre')?.value.trim();
+  const frecuencia = document.getElementById('med-frecuencia')?.value.trim();
+  if (!nombre) { fieldError('med-nombre', 'El nombre del medicamento es obligatorio'); return; }
+  if (!frecuencia) { fieldError('med-frecuencia', 'La frecuencia es obligatoria'); return; }
+
+  const horarios = (document.getElementById('med-horarios')?.value || '').split(',').map(h => h.trim()).filter(Boolean);
+  const indicaciones = document.getElementById('med-indicaciones')?.value.trim();
+
+  const nuevo = {
+    id: 'med_' + Date.now(),
+    nombre, frecuencia, horarios, indicaciones,
+    fecha_inicio: new Date().toISOString().split('T')[0],
+    activo: true,
+    prescrito_por_nombre: window._db.currentUser?.nombre || 'Médico tratante',
+  };
+
+  if (!p.medicamentos) p.medicamentos = [];
+  p.medicamentos.unshift(nuevo);
+
+  auditLog('medicamentos', 'INSERT', nuevo.id, { paciente: p.nombre, medicamento: nombre, frecuencia });
+
+  closeModal();
+  app.showToast('Medicamento agregado', 'ok');
+  if (window.selectPatient) window.selectPatient(patientId);
+};
+
+/** Discontinúa un medicamento (nunca se borra: se marca inactivo con fecha y motivo) */
+window._discontinuarMedicamento = function(patientId, medId) {
+  const p = window._db.MOCK_PATIENTS.find(pt => pt.id === patientId);
+  const med = p?.medicamentos?.find(m => m.id === medId);
+  if (!med) return;
+
+  const motivo = prompt(`¿Motivo para discontinuar "${med.nombre}"? (obligatorio)`);
+  if (!motivo?.trim()) { app.showToast('Debes indicar un motivo para discontinuar el medicamento', 'warn'); return; }
+
+  med.activo = false;
+  med.fecha_fin = new Date().toISOString().split('T')[0];
+  med.motivo_termino = motivo.trim();
+
+  auditLog('medicamentos', 'UPDATE', med.id, { paciente: p.nombre, medicamento: med.nombre, motivo_termino: motivo.trim(), accion: 'discontinuado' });
+
+  app.showToast(`${med.nombre} discontinuado`, 'ok');
+  if (window.selectPatient) window.selectPatient(patientId);
 };

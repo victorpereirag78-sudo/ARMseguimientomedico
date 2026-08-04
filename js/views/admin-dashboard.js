@@ -2,7 +2,7 @@
    ARM Seguimiento Médico — Vista: Dashboard del Administrador
    Métricas generales del sistema
    ============================================================ */
-import { getMedicos } from '../db.js';
+import { getMedicos, getConsentimientoVigente } from '../db.js';
 
 export async function renderAdminDashboard(container) {
   container.innerHTML = '<div class="page-loading"><div class="spinner"></div></div>';
@@ -17,7 +17,7 @@ export async function renderAdminDashboard(container) {
   alertasSinResolver.forEach(a => { porSeveridad[a.severidad] = (porSeveridad[a.severidad] || 0) + 1; });
   const adherenciaProm = totalPacientes ? Math.round(MOCK_PATIENTS.reduce((acc, p) => acc + (p.adherencia || 0), 0) / totalPacientes) : 0;
   const totalRegistros = MOCK_PATIENTS.reduce((acc, p) => acc + (p.registros?.length || 0), 0);
-  const consentimientosPendientes = MOCK_PATIENTS.filter(p => !p.consentimiento_informado).length;
+  const consentimientosPendientes = MOCK_PATIENTS.filter(p => !getConsentimientoVigente(p)).length;
 
   container.innerHTML = `
   <div class="view-header">

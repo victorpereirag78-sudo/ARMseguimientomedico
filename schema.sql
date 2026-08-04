@@ -12,7 +12,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";     -- para jobs automáticos (opciona
 -- ──────────────────────────────────────────────
 CREATE TABLE public.profiles (
   id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role              TEXT NOT NULL CHECK (role IN ('admin', 'medico', 'paciente')),
+  role              TEXT NOT NULL CHECK (role IN ('admin', 'medico', 'enfermeria', 'secretaria', 'paciente')),
   nombre_completo   TEXT NOT NULL,
   email             TEXT NOT NULL,
   telefono          TEXT,
@@ -34,6 +34,18 @@ CREATE TABLE public.medicos (
 );
 
 -- ──────────────────────────────────────────────
+-- 2b. PERSONAL CLÍNICO/ADMINISTRATIVO (Enfermería, Secretaría)
+-- ──────────────────────────────────────────────
+-- Rol operativo asociado a un médico (equipo de apoyo). El detalle del
+-- cargo (p.ej. "Enfermera universitaria") es texto libre; el control de
+-- acceso real se basa en profiles.role ('enfermeria' | 'secretaria').
+CREATE TABLE public.staff_clinico (
+  id                UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  medico_id         UUID REFERENCES public.medicos(id),
+  cargo             TEXT
+);
+
+-- ──────────────────────────────────────────────
 -- 3. PACIENTES
 -- ──────────────────────────────────────────────
 CREATE TABLE public.pacientes (
@@ -49,10 +61,26 @@ CREATE TABLE public.pacientes (
   contacto_emergencia_relacion   TEXT,
   medico_id                      UUID REFERENCES public.medicos(id),
   activo                         BOOLEAN DEFAULT true,
-  consentimiento_informado       BOOLEAN DEFAULT false,
-  fecha_consentimiento           TIMESTAMPTZ,
   created_at                     TIMESTAMPTZ DEFAULT now(),
   updated_at                     TIMESTAMPTZ DEFAULT now()
+);
+
+-- ──────────────────────────────────────────────
+-- 3b. CONSENTIMIENTOS INFORMADOS (versionado, Ley N.º 20.584)
+-- ──────────────────────────────────────────────
+-- Cada aceptación queda como una fila propia — nunca se sobrescribe.
+-- El estado vigente de un paciente es la fila más reciente sin revocar.
+CREATE TABLE public.consentimientos (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  paciente_id         UUID NOT NULL REFERENCES public.pacientes(id) ON DELETE CASCADE,
+  version_documento   TEXT NOT NULL DEFAULT '1.0',
+  aceptado            BOOLEAN NOT NULL DEFAULT true,
+  registrado_por       UUID REFERENCES public.profiles(id),
+  fecha_aceptacion    TIMESTAMPTZ DEFAULT now(),
+  revocado            BOOLEAN DEFAULT false,
+  fecha_revocacion    TIMESTAMPTZ,
+  motivo_revocacion   TEXT,
+  created_at          TIMESTAMPTZ DEFAULT now()
 );
 
 -- ──────────────────────────────────────────────
@@ -100,6 +128,8 @@ CREATE TABLE public.medicamentos (
   fecha_inicio          DATE NOT NULL,
   fecha_fin             DATE,
   activo                BOOLEAN DEFAULT true,
+  motivo_termino        TEXT,   -- por qué se suspendió/reemplazó (si aplica)
+  reemplaza_a           UUID REFERENCES public.medicamentos(id),  -- entrada anterior que esta reemplaza (historial encadenado)
   prescrito_por         UUID REFERENCES public.medicos(id),
   created_at            TIMESTAMPTZ DEFAULT now()
 );
@@ -200,6 +230,12 @@ CREATE TABLE public.evoluciones (
   objetivo          TEXT,  -- Hallazgos del examen
   evaluacion        TEXT,  -- Diagnóstico / impresión clínica
   plan              TEXT,  -- Plan de acción
+
+  -- Firma electrónica e inalterabilidad: no existe política de UPDATE/DELETE
+  -- para esta tabla (ver rls.sql) — toda corrección se agrega como una
+  -- evolución nueva que referencia a la original.
+  firmada_at            TIMESTAMPTZ DEFAULT now(),
+  corrige_evolucion_id  UUID REFERENCES public.evoluciones(id),
 
   fecha_evolucion   TIMESTAMPTZ DEFAULT now(),
   created_at        TIMESTAMPTZ DEFAULT now()
@@ -319,6 +355,9 @@ CREATE INDEX idx_planes_paciente          ON public.planes_seguimiento(paciente_
 CREATE INDEX idx_planes_estado            ON public.planes_seguimiento(estado) WHERE estado = 'activo';
 CREATE INDEX idx_notificaciones_usuario   ON public.notificaciones(usuario_id, leida);
 CREATE INDEX idx_auditoria_tabla          ON public.auditoria(tabla, created_at DESC);
+CREATE INDEX idx_consentimientos_paciente ON public.consentimientos(paciente_id, created_at DESC);
+CREATE INDEX idx_staff_medico             ON public.staff_clinico(medico_id);
+CREATE INDEX idx_medicamentos_reemplaza   ON public.medicamentos(reemplaza_a);
 
 -- ──────────────────────────────────────────────
 -- TRIGGER: updated_at automático

@@ -2,7 +2,7 @@
    ARM Seguimiento Médico — Vista: Mi perfil (paciente)
    Datos de contacto editables + estado de consentimiento informado
    ============================================================ */
-import { logAudit } from '../db.js';
+import { logAudit, getConsentimientoVigente, registrarConsentimientoPaciente, revocarConsentimientoPaciente } from '../db.js';
 import { isValidTelefono, isValidEmail, wireLiveValidation } from '../validators.js';
 import { fieldError } from '../modals.js';
 
@@ -48,17 +48,37 @@ export function renderPerfilView(container, patientId) {
     renderPerfilView(container, patientId);
   };
 
-  window._otorgarMiConsentimiento = () => {
+  window._otorgarMiConsentimiento = async () => {
     if (!confirm('¿Confirmas que otorgas tu consentimiento informado para el tratamiento de tu información clínica conforme a la Ley N.º 20.584?')) return;
-    p.consentimiento_informado = true;
-    p.fecha_consentimiento = new Date().toISOString();
 
-    logAudit(window._db.currentUser, 'pacientes', 'UPDATE', p.id, {
-      paciente: p.nombre,
-      consentimiento_informado: true,
-    });
+    const registro = await registrarConsentimientoPaciente(p, `${p.nombre} (paciente)`);
+    logAudit(window._db.currentUser, 'consentimientos', 'INSERT', registro.id, { paciente: p.nombre, version: registro.version_documento });
 
     window.app?.showToast('Consentimiento informado registrado', 'ok');
+    renderPerfilView(container, patientId);
+  };
+
+  window._revocarMiConsentimiento = async () => {
+    const motivo = prompt('¿Por qué deseas revocar tu consentimiento informado? (obligatorio — quedará registrado)');
+    if (!motivo?.trim()) { window.app?.showToast('Debes indicar un motivo para revocar el consentimiento', 'warn'); return; }
+
+    const revocado = await revocarConsentimientoPaciente(p, motivo.trim());
+    if (!revocado) return;
+    logAudit(window._db.currentUser, 'consentimientos', 'UPDATE', revocado.id, { paciente: p.nombre, motivo_revocacion: motivo.trim() });
+
+    if (!window._db.MOCK_NOTIFICACIONES) window._db.MOCK_NOTIFICACIONES = [];
+    window._db.MOCK_NOTIFICACIONES.unshift({
+      id: 'n_' + Date.now(),
+      usuario_role: 'medico',
+      tipo: 'consentimiento',
+      titulo: 'Un paciente revocó su consentimiento informado',
+      mensaje: `${p.nombre} revocó su consentimiento — motivo: ${motivo.trim()}`,
+      leida: false,
+      created_at: new Date().toISOString(),
+    });
+    window.app?.renderNotifBadge?.();
+
+    window.app?.showToast('Consentimiento revocado. Tu médico ha sido notificado.', 'ok');
     renderPerfilView(container, patientId);
   };
 }
@@ -77,20 +97,20 @@ function getPerfilHTML(p) {
     <!-- Consentimiento informado -->
     <div class="ficha-section" style="margin-bottom:var(--s-4)">
       <div class="ficha-section-title">Consentimiento informado · Ley 20.584</div>
-      ${p.consentimiento_informado ? `
-        <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--ok)">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span style="font-size:var(--f-sm)">Otorgaste tu consentimiento el ${new Date(p.fecha_consentimiento).toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</span>
-        </div>
-      ` : `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--alert)">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style="font-size:var(--f-sm)">Aún no has otorgado tu consentimiento informado</span>
+      ${_consentimientoBloquePerfil(p)}
+      ${(p.consentimientos || []).length ? `
+        <details style="margin-top:var(--s-3)">
+          <summary style="cursor:pointer;font-size:var(--f-xs);color:var(--tx-3)">Ver historial (${p.consentimientos.length})</summary>
+          <div style="margin-top:var(--s-2)">
+            ${[...p.consentimientos].sort((a,b) => new Date(b.fecha_aceptacion) - new Date(a.fecha_aceptacion)).map(c => `
+              <div style="font-size:var(--f-xs);color:var(--tx-3);padding:var(--s-2) 0;border-bottom:1px solid var(--bd-light)">
+                v${c.version_documento} · ${new Date(c.fecha_aceptacion).toLocaleString('es-CL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                ${c.revocado ? ` · <span style="color:var(--alert)">Revocado</span>` : ' · <span style="color:var(--ok)">Vigente</span>'}
+              </div>
+            `).join('')}
           </div>
-          <button class="btn btn-primary btn-sm" onclick="window._otorgarMiConsentimiento()">Otorgar consentimiento</button>
-        </div>
-      `}
+        </details>
+      ` : ''}
     </div>
 
     <!-- Datos personales (solo lectura) -->
@@ -135,4 +155,26 @@ function getPerfilHTML(p) {
     </div>
   </div>
   `;
+}
+
+function _consentimientoBloquePerfil(p) {
+  const vigente = getConsentimientoVigente(p);
+  if (vigente) {
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--ok)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span style="font-size:var(--f-sm)">Otorgaste tu consentimiento (v${vigente.version_documento}) el ${new Date(vigente.fecha_aceptacion).toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="window._revocarMiConsentimiento()">Revocar</button>
+      </div>`;
+  }
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--alert)">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span style="font-size:var(--f-sm)">Aún no has otorgado tu consentimiento informado</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="window._otorgarMiConsentimiento()">Otorgar consentimiento</button>
+    </div>`;
 }

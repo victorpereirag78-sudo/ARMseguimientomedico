@@ -1,8 +1,36 @@
 /* ============================================================
    ARM Seguimiento Médico — Vista: Dashboard
    ============================================================ */
-import { MOCK_STATS, MOCK_PATIENTS, logAudit } from '../db.js';
+import { MOCK_STATS, MOCK_PATIENTS, logAudit, getConsentimientoVigente } from '../db.js';
 import { renderEvolucionSection, initEvolucionCharts } from '../charts.js';
+
+/** Enfermería puede ver y registrar vitales, pero no diagnósticos/tratamientos/evoluciones */
+function _isEnfermeria() {
+  return window._db.currentUser?.role === 'enfermeria';
+}
+
+/** Bloque de estado del consentimiento informado vigente (versionado) */
+function _renderConsentimientoBloque(p) {
+  const vigente = getConsentimientoVigente(p);
+  if (vigente) {
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--ok)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span style="font-size:var(--f-sm)">Consentimiento v${vigente.version_documento} otorgado el ${new Date(vigente.fecha_aceptacion).toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</span>
+        </div>
+        ${_isEnfermeria() ? '' : `<button class="btn btn-secondary btn-sm" onclick="app.revocarConsentimiento('${p.id}')">Revocar</button>`}
+      </div>`;
+  }
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)">
+      <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--alert)">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span style="font-size:var(--f-sm)">Consentimiento informado pendiente${(p.consentimientos || []).some(c => c.revocado) ? ' (revocado previamente)' : ''}</span>
+      </div>
+      ${_isEnfermeria() ? '' : `<button class="btn btn-primary btn-sm" onclick="app.registrarConsentimiento('${p.id}')">Registrar consentimiento</button>`}
+    </div>`;
+}
 
 /** Registra en auditoría que un médico/admin accedió (consultó) la ficha de un paciente */
 export function logPatientAccess(id, nombre) {
@@ -48,10 +76,11 @@ function getDashboardHTML() {
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Generar reporte
       </button>
+      ${_isEnfermeria() ? '' : `
       <button class="btn btn-primary" onclick="app.showNewPatientModal()">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nueva ficha clínica
-      </button>
+      </button>`}
     </div>
   </div>
 
@@ -278,11 +307,17 @@ function renderTabResumen(p, lastReg, planInicio, planControl) {
       <div class="next-action-title">${p.prox_accion_titulo}</div>
       <div class="next-action-desc">${p.prox_accion_desc}</div>
       <div class="next-action-btns">
+        ${_isEnfermeria() ? `
+        <button class="btn btn-primary btn-sm btn-full" onclick="app.showNewRegistroModal('${p.id}')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Registrar vitales
+        </button>
+        ` : `
         <button class="btn btn-primary btn-sm btn-full" onclick="app.showNuevaEvolucionModal('${p.id}')">
           <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Registrar evolución
         </button>
-        <button class="btn btn-secondary btn-sm btn-full">Ajustar seguimiento</button>
+        <button class="btn btn-secondary btn-sm btn-full">Ajustar seguimiento</button>`}
       </div>
     </div>
   </div>
@@ -425,7 +460,7 @@ export function switchDetailTab(tab, btnEl) {
     content.innerHTML = renderTabSeguimiento(p);
     initCharts(p);
   } else if (tab === 'evoluciones') {
-    content.innerHTML = renderTabEvoluciones(p);
+    content.innerHTML = renderTabEvoluciones(p, _isEnfermeria());
   } else if (tab === 'examenes') {
     content.innerHTML = renderTabExamenes(p);
   }
@@ -449,20 +484,21 @@ function renderTabFicha(p) {
 
   <div class="ficha-section">
     <div class="ficha-section-title">Cumplimiento legal · Ley 20.584</div>
-    ${p.consentimiento_informado ? `
-      <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--ok)">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <span style="font-size:var(--f-sm)">Consentimiento informado otorgado el ${new Date(p.fecha_consentimiento).toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</span>
-      </div>
-    ` : `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)">
-        <div style="display:flex;align-items:center;gap:var(--s-2);color:var(--alert)">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span style="font-size:var(--f-sm)">Consentimiento informado pendiente</span>
+    ${_renderConsentimientoBloque(p)}
+    ${(p.consentimientos || []).length ? `
+      <details style="margin-top:var(--s-3)">
+        <summary style="cursor:pointer;font-size:var(--f-xs);color:var(--tx-3)">Ver historial de consentimientos (${p.consentimientos.length})</summary>
+        <div class="tag-list" style="margin-top:var(--s-2)">
+          ${[...p.consentimientos].sort((a,b) => new Date(b.fecha_aceptacion) - new Date(a.fecha_aceptacion)).map(c => `
+            <div style="font-size:var(--f-xs);color:var(--tx-3);padding:var(--s-2) 0;border-bottom:1px solid var(--bd-light);width:100%">
+              v${c.version_documento} · ${new Date(c.fecha_aceptacion).toLocaleString('es-CL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+              ${c.revocado ? ` · <span style="color:var(--alert)">Revocado el ${new Date(c.fecha_revocacion).toLocaleDateString('es-CL')}${c.motivo_revocacion ? ` — ${c.motivo_revocacion}` : ''}</span>` : ' · <span style="color:var(--ok)">Vigente</span>'}
+              ${c.registrado_por_nombre ? ` · Registrado por: ${c.registrado_por_nombre}` : ''}
+            </div>
+          `).join('')}
         </div>
-        <button class="btn btn-primary btn-sm" onclick="app.registrarConsentimiento('${p.id}')">Registrar consentimiento</button>
-      </div>
-    `}
+      </details>
+    ` : ''}
   </div>
 
   <div class="ficha-section">
@@ -500,18 +536,35 @@ function renderTabFicha(p) {
   </div>
 
   <div class="ficha-section">
-    <div class="ficha-section-title">Medicamentos actuales</div>
-    ${(p.medicamentos||[]).map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="ficha-section-title">Medicamentos actuales</div>
+      ${_isEnfermeria() ? '' : `<button class="btn btn-secondary btn-sm" onclick="app.showNuevoMedicamentoModal('${p.id}')">+ Nuevo medicamento</button>`}
+    </div>
+    ${(p.medicamentos || []).filter(m => m.activo !== false).map(m => `
       <div class="card card-pad-sm" style="margin-bottom: var(--s-2); display:flex; align-items:center; gap:var(--s-4)">
-        <div style="width:36px;height:36px;background:var(--brand-bg);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;">
+        <div style="width:36px;height:36px;background:var(--brand-bg);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--brand)" fill="none" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
         </div>
-        <div>
+        <div style="flex:1">
           <div style="font-size:var(--f-sm);font-weight:var(--fw-sb);color:var(--tx-1)">${m.nombre}</div>
-          <div style="font-size:var(--f-xs);color:var(--tx-3)">${m.frecuencia} · Horario: ${m.horarios.join(', ')}</div>
+          <div style="font-size:var(--f-xs);color:var(--tx-3)">${m.frecuencia} · Horario: ${(m.horarios || []).join(', ')}${m.fecha_inicio ? ` · Desde ${new Date(m.fecha_inicio).toLocaleDateString('es-CL', {day:'2-digit',month:'short',year:'numeric'})}` : ''}</div>
         </div>
+        ${_isEnfermeria() ? '' : `<button class="btn btn-ghost btn-sm" onclick="window._discontinuarMedicamento('${p.id}','${m.id}')" title="Discontinuar">Discontinuar</button>`}
       </div>
     `).join('')}
+    ${!(p.medicamentos || []).some(m => m.activo !== false) ? '<p style="font-size:var(--f-sm);color:var(--tx-3)">Sin medicamentos activos.</p>' : ''}
+    ${(p.medicamentos || []).some(m => m.activo === false) ? `
+      <details style="margin-top:var(--s-3)">
+        <summary style="cursor:pointer;font-size:var(--f-xs);color:var(--tx-3)">Ver medicamentos discontinuados (${p.medicamentos.filter(m => m.activo === false).length})</summary>
+        ${p.medicamentos.filter(m => m.activo === false).map(m => `
+          <div style="font-size:var(--f-xs);color:var(--tx-3);padding:var(--s-2) 0;border-bottom:1px solid var(--bd-light)">
+            <strong style="color:var(--tx-2)">${m.nombre}</strong> — ${m.frecuencia}<br>
+            Desde ${new Date(m.fecha_inicio).toLocaleDateString('es-CL')} hasta ${new Date(m.fecha_fin).toLocaleDateString('es-CL')}
+            ${m.motivo_termino ? ` · Motivo: ${m.motivo_termino}` : ''}
+          </div>
+        `).join('')}
+      </details>
+    ` : ''}
   </div>
   `;
 }

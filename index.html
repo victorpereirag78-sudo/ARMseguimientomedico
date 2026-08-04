@@ -88,6 +88,14 @@
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Administrador
           </button>
+          <button class="role-tab" data-role="enfermeria" onclick="selectRole(this)">
+            <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            Enfermería
+          </button>
+          <button class="role-tab" data-role="secretaria" onclick="selectRole(this)">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Secretaria
+          </button>
         </div>
 
         <div class="form-group">
@@ -132,7 +140,9 @@
           <strong>Credenciales de demostración</strong>
           Médico: <b>doctor@arm.cl</b> / <b>demo1234</b><br>
           Paciente: <b>paciente@arm.cl</b> / <b>demo1234</b><br>
-          Admin: <b>admin@arm.cl</b> / <b>demo1234</b>
+          Admin: <b>admin@arm.cl</b> / <b>demo1234</b><br>
+          Enfermería: <b>enfermeria@arm.cl</b> / <b>demo1234</b><br>
+          Secretaria: <b>secretaria@arm.cl</b> / <b>demo1234</b>
         </div>
       </div>
     </div>
@@ -149,7 +159,7 @@
       document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedRole = btn.dataset.role;
-      const placeholders = { medico: 'doctor@clinica.cl', paciente: 'paciente@clinica.cl', admin: 'admin@clinica.cl' };
+      const placeholders = { medico: 'doctor@clinica.cl', paciente: 'paciente@clinica.cl', admin: 'admin@clinica.cl', enfermeria: 'enfermeria@clinica.cl', secretaria: 'secretaria@clinica.cl' };
       document.getElementById('email').placeholder = placeholders[selectedRole];
     }
 
@@ -208,15 +218,17 @@
           await new Promise(r => setTimeout(r, 700)); // simular delay de red
 
           const DEMO_USERS = {
-            'doctor@arm.cl':   { password: 'demo1234', role: 'medico',   nombre: 'Dr. Diego Canqui' },
-            'paciente@arm.cl': { password: 'demo1234', role: 'paciente', nombre: 'María González', paciente_id: 'p1' },
-            'admin@arm.cl':    { password: 'demo1234', role: 'admin',    nombre: 'Admin ARM Sistemas' },
+            'doctor@arm.cl':     { password: 'demo1234', role: 'medico',     nombre: 'Dr. Diego Canqui' },
+            'paciente@arm.cl':   { password: 'demo1234', role: 'paciente',   nombre: 'María González', paciente_id: 'p1' },
+            'admin@arm.cl':      { password: 'demo1234', role: 'admin',      nombre: 'Admin ARM Sistemas' },
+            'enfermeria@arm.cl': { password: 'demo1234', role: 'enfermeria', nombre: 'Enf. Paula Rivas', medico_id: 'm1' },
+            'secretaria@arm.cl': { password: 'demo1234', role: 'secretaria', nombre: 'Javiera Soto',      medico_id: 'm1' },
           };
 
           const found = DEMO_USERS[email.toLowerCase()];
 
           if (!found || found.password !== password) {
-            showError('Credenciales incorrectas.\nMédico: doctor@arm.cl / demo1234\nPaciente: paciente@arm.cl / demo1234\nAdmin: admin@arm.cl / demo1234');
+            showError('Credenciales incorrectas.\nMédico: doctor@arm.cl / demo1234\nPaciente: paciente@arm.cl / demo1234\nAdmin: admin@arm.cl / demo1234\nEnfermería: enfermeria@arm.cl / demo1234\nSecretaria: secretaria@arm.cl / demo1234');
             return;
           }
 
@@ -225,7 +237,7 @@
             return;
           }
 
-          localStorage.setItem('arm_demo_user', JSON.stringify({ role: found.role, nombre: found.nombre, email, paciente_id: found.paciente_id }));
+          localStorage.setItem('arm_demo_user', JSON.stringify({ role: found.role, nombre: found.nombre, email, paciente_id: found.paciente_id, medico_id: found.medico_id }));
           window.location.href = 'app.html';
           return;
         }

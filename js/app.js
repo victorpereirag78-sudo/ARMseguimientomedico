@@ -2,7 +2,7 @@
    ARM Seguimiento Médico — App Entry Point
    Router + Sidebar + Inicialización
    ============================================================ */
-import { MOCK_PATIENTS, MOCK_MEDICO, MOCK_MEDICOS, MOCK_ALERTAS, MOCK_STATS, MOCK_NOTIFICACIONES, MOCK_CONFIG_ALERTAS, getCurrentUser, getMyNotificaciones, marcarNotificacionLeida, logAudit, logout } from './db.js';
+import { MOCK_PATIENTS, MOCK_MEDICO, MOCK_MEDICOS, MOCK_ALERTAS, MOCK_STATS, MOCK_NOTIFICACIONES, MOCK_CONFIG_ALERTAS, getCurrentUser, getMyNotificaciones, marcarNotificacionLeida, logAudit, registrarConsentimientoPaciente, revocarConsentimientoPaciente, logout } from './db.js';
 import { renderDashboard, renderPatientCard, renderPatientDetail } from './views/dashboard.js';
 import { renderAlertas } from './views/alertas.js';
 import { renderReportes } from './views/reportes.js';
@@ -13,7 +13,8 @@ import { renderAdminDashboard } from './views/admin-dashboard.js';
 import { renderAdminPacientes } from './views/admin-pacientes.js';
 import { renderAdminUsuarios } from './views/admin-usuarios.js';
 import { renderAdminConfigAlertas } from './views/admin-config-alertas.js';
-import { showNewFichaModal, showNuevoRegistroModal, showNuevaEvolucionModal, showLogoutConfirmModal, closeModal } from './modals.js';
+import { renderSecretariaPacientes } from './views/secretaria-pacientes.js';
+import { showNewFichaModal, showNuevoRegistroModal, showNuevaEvolucionModal, showNuevoMedicamentoModal, showLogoutConfirmModal, closeModal } from './modals.js';
 import { exportPatientPDF } from './pdf.js';
 
 // ── Exponemos db al window para acceso en event handlers ─────
@@ -48,10 +49,16 @@ const adminRoutes = {
   'paciente-view':   (c) => renderPacienteView(c, window._lastSelectedPatientId || MOCK_PATIENTS[0]?.id, { readOnly: true }),
 };
 
+// ── Configuración de rutas (secretaria) ───────────────────────
+const secretariaRoutes = {
+  'pacientes': (c) => renderSecretariaPacientes(c),
+};
+
 function activeRoutes() {
   if (currentUser?.role === 'paciente') return pacienteRoutes;
   if (currentUser?.role === 'admin') return adminRoutes;
-  return medicoRoutes;
+  if (currentUser?.role === 'secretaria') return secretariaRoutes;
+  return medicoRoutes; // médico y enfermería comparten rutas; dashboard.js acota acciones por rol
 }
 
 function defaultRoute() {
@@ -118,11 +125,13 @@ function closeSidebarOnMobile() {
 // ── Sidebar ───────────────────────────────────────────────────
 function renderSidebar() {
   const sidebar = document.getElementById('sidebar');
-  const isPaciente = currentUser?.role === 'paciente';
-  const isAdmin   = currentUser?.role === 'admin';
+  const isPaciente   = currentUser?.role === 'paciente';
+  const isAdmin      = currentUser?.role === 'admin';
+  const isEnfermeria = currentUser?.role === 'enfermeria';
+  const isSecretaria = currentUser?.role === 'secretaria';
   const alertCount = MOCK_ALERTAS.filter(a => !a.resuelta).length;
   const userName  = currentUser?.nombre || MOCK_MEDICO.nombre;
-  const userRole  = isPaciente ? 'Paciente' : isAdmin ? 'Administrador' : (currentUser?.especialidad || MOCK_MEDICO.especialidad);
+  const userRole  = isPaciente ? 'Paciente' : isAdmin ? 'Administrador' : isEnfermeria ? 'Enfermería' : isSecretaria ? 'Secretaria' : (currentUser?.especialidad || MOCK_MEDICO.especialidad);
   const userAv    = userName.split(' ').filter(w => /^[A-ZÁÉÍÓÚÑ]/i.test(w[0])).slice(0, 2).map(w => w[0].toUpperCase()).join('');
 
   const navItems = isPaciente ? [
@@ -134,6 +143,8 @@ function renderSidebar() {
     { id: 'admin-usuarios',  label: 'Usuarios',         icon: iconGrid,     badge: null },
     { id: 'admin-alertas',   label: 'Umbrales de alerta', icon: iconSettings, badge: null },
     { id: 'auditoria',       label: 'Auditoría',        icon: iconReport,   badge: null },
+  ] : isSecretaria ? [
+    { id: 'pacientes', label: 'Pacientes', icon: iconUser, badge: null },
   ] : [
     { id: 'pacientes',    label: 'Pacientes',    icon: iconUser,     badge: null },
     { id: 'seguimientos', label: 'Seguimientos', icon: iconGrid,     badge: null },
@@ -155,8 +166,8 @@ function renderSidebar() {
 
     <!-- Navegación -->
     <nav class="sidebar-nav">
-      <div class="nav-section-label">${isPaciente ? 'Mi salud' : isAdmin ? 'Cumplimiento' : 'Gestión Clínica'}</div>
-      ${isPaciente || isAdmin ? '' : `
+      <div class="nav-section-label">${isPaciente ? 'Mi salud' : isAdmin ? 'Cumplimiento' : isSecretaria ? 'Agenda' : 'Gestión Clínica'}</div>
+      ${isPaciente || isAdmin || isSecretaria ? '' : `
       <div class="nav-item" data-route="pacientes" onclick="app.navigate('pacientes')">
         ${iconHome} Inicio
       </div>`}
@@ -262,7 +273,8 @@ function showNewRegistroModal(patientId) {
   // Si no viene patientId, usar el paciente activo en el panel
   const id = patientId || document.querySelector('.patient-card.active')?.dataset.patientId;
   if (!id) { showToast('Selecciona un paciente primero', 'warn'); return; }
-  showNuevoRegistroModal(id);
+  const actor = currentUser?.role === 'enfermeria' ? 'enfermera' : 'medico';
+  showNuevoRegistroModal(id, actor);
 }
 
 function showEvolucionModal(patientId) {
@@ -275,17 +287,34 @@ function showNuevoAutoRegistro(patientId) {
   showNuevoRegistroModal(patientId, 'paciente');
 }
 
-function registrarConsentimiento(patientId) {
+async function registrarConsentimiento(patientId) {
   const p = MOCK_PATIENTS.find(pt => pt.id === patientId);
   if (!p) return;
   if (!confirm(`¿Confirmas que ${p.nombre} (o su representante legal) otorgó su consentimiento informado para el tratamiento de su información clínica?`)) return;
 
-  p.consentimiento_informado = true;
-  p.fecha_consentimiento = new Date().toISOString();
+  const registro = await registrarConsentimientoPaciente(p, `${currentUser.nombre} (médico)`);
 
-  logAudit(currentUser, 'pacientes', 'UPDATE', p.id, { consentimiento_informado: true });
+  logAudit(currentUser, 'consentimientos', 'INSERT', registro.id, { paciente: p.nombre, version: registro.version_documento });
 
   showToast('Consentimiento informado registrado', 'ok');
+  if (window.selectPatient) window.selectPatient(patientId);
+  setTimeout(() => window.switchDetailTab?.('ficha'), 0);
+}
+
+// Nota: esta acción es exclusiva del médico (ver RLS en rls.sql) — el
+// administrador nunca puede leer ni escribir el consentimiento clínico.
+async function revocarConsentimiento(patientId) {
+  const p = MOCK_PATIENTS.find(pt => pt.id === patientId);
+  if (!p) return;
+  const motivo = prompt(`¿Motivo de la revocación del consentimiento de ${p.nombre}? (obligatorio)`);
+  if (!motivo?.trim()) { showToast('Debes indicar un motivo para revocar el consentimiento', 'warn'); return; }
+
+  const revocado = await revocarConsentimientoPaciente(p, motivo.trim());
+  if (!revocado) { showToast('No hay un consentimiento vigente para revocar', 'warn'); return; }
+
+  logAudit(currentUser, 'consentimientos', 'UPDATE', revocado.id, { paciente: p.nombre, motivo_revocacion: motivo.trim() });
+
+  showToast('Consentimiento revocado', 'ok');
   if (window.selectPatient) window.selectPatient(patientId);
   setTimeout(() => window.switchDetailTab?.('ficha'), 0);
 }
@@ -393,7 +422,7 @@ const iconReport = `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2
 const iconSettings = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
 
 // ── Exponer API pública ───────────────────────────────────────
-window.app = { navigate, showUserMenu, showNewPatientModal, showPatientFull, showNewRegistroModal, showNuevaEvolucionModal: showEvolucionModal, showNuevoAutoRegistro, exportFichaPDF, registrarConsentimiento, toggleNotifPanel, marcarNotifLeida, marcarTodasNotifLeidas, renderNotifBadge, toggleSidebar, showToast, closeModal };
+window.app = { navigate, showUserMenu, showNewPatientModal, showPatientFull, showNewRegistroModal, showNuevaEvolucionModal: showEvolucionModal, showNuevoAutoRegistro, showNuevoMedicamentoModal, exportFichaPDF, registrarConsentimiento, revocarConsentimiento, toggleNotifPanel, marcarNotifLeida, marcarTodasNotifLeidas, renderNotifBadge, toggleSidebar, showToast, closeModal };
 
 // ── Arrancar ──────────────────────────────────────────────────
 init();

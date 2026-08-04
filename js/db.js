@@ -30,8 +30,8 @@ export const MOCK_PATIENTS = [
     avatar_bg: '#8b5cf6',
     avatar: 'MG',
     medicamentos: [
-      { nombre: 'Losartán 50 mg', horarios: ['08:00', '20:00'], frecuencia: 'Cada 12 horas' },
-      { nombre: 'Eutirox 50 mcg', horarios: ['07:00'], frecuencia: 'Una vez al día en ayunas' },
+      { id: 'med_1', nombre: 'Losartán 50 mg', horarios: ['08:00', '20:00'], frecuencia: 'Cada 12 horas', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_2', nombre: 'Eutirox 50 mcg', horarios: ['07:00'], frecuencia: 'Una vez al día en ayunas', activo: true, fecha_inicio: '2026-06-01' },
     ],
     diagnosticos: ['Hipertensión Arterial esencial (I10)', 'Hipotiroidismo primario (E03.9)'],
     antecedentes_medicos: 'DM2 en seguimiento. Dislipidemia controlada.',
@@ -43,8 +43,9 @@ export const MOCK_PATIENTS = [
     contacto_emergencia: 'Pedro González (hijo) — +56 9 8765 4321',
     medico_id: 'm1',
     activo: true,
-    consentimiento_informado: true,
-    fecha_consentimiento: '2026-07-25T09:10:00',
+    consentimientos: [
+      { id: 'cons_p1_1', version_documento: '1.0', aceptado: true, fecha_aceptacion: '2026-07-25T09:10:00', registrado_por_nombre: 'María González (paciente)', revocado: false },
+    ],
     registros: [
       { fecha: '2026-07-31T08:14:00', presion_s: 133, presion_d: 82, pulso: 70, observaciones: '', cumplimiento_pct: 100 },
       { fecha: '2026-07-30T21:08:00', presion_s: 138, presion_d: 86, pulso: 72, observaciones: 'Sintió leve mareo', cumplimiento_pct: 100 },
@@ -103,8 +104,8 @@ export const MOCK_PATIENTS = [
     avatar_bg: '#3b82f6',
     avatar: 'CR',
     medicamentos: [
-      { nombre: 'Metformina 850 mg', horarios: ['08:00', '20:00'], frecuencia: 'Con las comidas' },
-      { nombre: 'Atorvastatina 20 mg', horarios: ['22:00'], frecuencia: 'Una vez al día, en la noche' },
+      { id: 'med_3', nombre: 'Metformina 850 mg', horarios: ['08:00', '20:00'], frecuencia: 'Con las comidas', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_4', nombre: 'Atorvastatina 20 mg', horarios: ['22:00'], frecuencia: 'Una vez al día, en la noche', activo: true, fecha_inicio: '2026-06-01' },
     ],
     diagnosticos: ['Diabetes Mellitus Tipo 2 (E11)', 'Dislipidemia mixta (E78.4)'],
     antecedentes_medicos: 'HTA leve sin tratamiento. Sobrepeso IMC 27.',
@@ -116,8 +117,9 @@ export const MOCK_PATIENTS = [
     contacto_emergencia: 'Ana Rojas (esposa) — +56 9 3456 7890',
     medico_id: 'm1',
     activo: true,
-    consentimiento_informado: true,
-    fecha_consentimiento: '2026-07-18T10:05:00',
+    consentimientos: [
+      { id: 'cons_p2_1', version_documento: '1.0', aceptado: true, fecha_aceptacion: '2026-07-18T10:05:00', registrado_por_nombre: 'Carlos Rojas (paciente)', revocado: false },
+    ],
     registros: [
       { fecha: '2026-07-31T07:45:00', glicemia: 142, glicemia_tipo: 'ayunas', observaciones: '' },
       { fecha: '2026-07-30T07:30:00', glicemia: 138, glicemia_tipo: 'ayunas', observaciones: '' },
@@ -158,8 +160,8 @@ export const MOCK_PATIENTS = [
     avatar_bg: '#ef4444',
     avatar: 'AS',
     medicamentos: [
-      { nombre: 'Salbutamol inhalador', horarios: ['08:00', '14:00', '20:00'], frecuencia: 'Cada 8 horas' },
-      { nombre: 'Furosemida 40 mg', horarios: ['08:00'], frecuencia: 'Una vez al día en ayunas' },
+      { id: 'med_5', nombre: 'Salbutamol inhalador', horarios: ['08:00', '14:00', '20:00'], frecuencia: 'Cada 8 horas', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_6', nombre: 'Furosemida 40 mg', horarios: ['08:00'], frecuencia: 'Una vez al día en ayunas', activo: true, fecha_inicio: '2026-06-01' },
     ],
     diagnosticos: ['EPOC moderado (J44.1)', 'Insuficiencia cardíaca leve (I50.9)'],
     antecedentes_medicos: 'Tabaquismo > 30 años (ex). HTA controlada.',
@@ -171,8 +173,7 @@ export const MOCK_PATIENTS = [
     contacto_emergencia: 'Rosa Silva (hija) — +56 9 4567 8901',
     medico_id: 'm2',
     activo: true,
-    consentimiento_informado: false,
-    fecha_consentimiento: null,
+    consentimientos: [],
     registros: [
       { fecha: '2026-07-30T15:20:00', saturacion: 89, frecuencia_cardiaca: 95, observaciones: 'Disnea al caminar' },
       { fecha: '2026-07-29T10:00:00', saturacion: 91, frecuencia_cardiaca: 88, observaciones: 'Tos con expectoración' },
@@ -212,10 +213,10 @@ export const MOCK_PATIENTS = [
     avatar_bg: '#10b981',
     avatar: 'JM',
     medicamentos: [
-      { nombre: 'AAS 100 mg', horarios: ['08:00'], frecuencia: 'Una vez al día' },
-      { nombre: 'Clopidogrel 75 mg', horarios: ['08:00'], frecuencia: 'Una vez al día' },
-      { nombre: 'Atorvastatina 40 mg', horarios: ['22:00'], frecuencia: 'Una vez al día nocturna' },
-      { nombre: 'Bisoprolol 5 mg', horarios: ['08:00'], frecuencia: 'Una vez al día' },
+      { id: 'med_7', nombre: 'AAS 100 mg', horarios: ['08:00'], frecuencia: 'Una vez al día', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_8', nombre: 'Clopidogrel 75 mg', horarios: ['08:00'], frecuencia: 'Una vez al día', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_9', nombre: 'Atorvastatina 40 mg', horarios: ['22:00'], frecuencia: 'Una vez al día nocturna', activo: true, fecha_inicio: '2026-06-01' },
+      { id: 'med_10', nombre: 'Bisoprolol 5 mg', horarios: ['08:00'], frecuencia: 'Una vez al día', activo: true, fecha_inicio: '2026-06-01' },
     ],
     diagnosticos: ['IAM anterior con supradesnivel ST (I21.0)', 'HTA esencial (I10)', 'Dislipidemia (E78.5)'],
     antecedentes_medicos: 'Tabaquismo activo (dejó tras IAM). Sedentario.',
@@ -227,8 +228,9 @@ export const MOCK_PATIENTS = [
     contacto_emergencia: 'Carmen Morales (esposa) — +56 9 6789 0123',
     medico_id: 'm2',
     activo: true,
-    consentimiento_informado: true,
-    fecha_consentimiento: '2026-07-22T11:30:00',
+    consentimientos: [
+      { id: 'cons_p4_1', version_documento: '1.0', aceptado: true, fecha_aceptacion: '2026-07-22T11:30:00', registrado_por_nombre: 'José Morales (paciente)', revocado: false },
+    ],
     registros: [
       { fecha: '2026-07-31T06:58:00', presion_s: 118, presion_d: 74, pulso: 62, frecuencia_cardiaca: 62, peso_kg: 87.6, cumplimiento_pct: 100, observaciones: '' },
       { fecha: '2026-07-30T07:10:00', presion_s: 122, presion_d: 76, pulso: 64, frecuencia_cardiaca: 64, peso_kg: 87.9, cumplimiento_pct: 100, observaciones: '' },
@@ -500,6 +502,59 @@ export async function logAudit(usuario, tabla, operacion, registroId, datosNuevo
     datos_nuevos: datosNuevos || null,
     datos_anteriores: datosAnteriores,
   });
+}
+
+// ── CONSENTIMIENTO INFORMADO (versionado, Ley 20.584) ────────
+// El estado vigente de un paciente es su registro más reciente sin
+// revocar — nunca se sobrescribe una fila existente.
+
+export const CONSENTIMIENTO_VERSION_ACTUAL = '1.0';
+
+export function getConsentimientoVigente(p) {
+  const lista = [...(p.consentimientos || [])].sort((a, b) => new Date(b.fecha_aceptacion) - new Date(a.fecha_aceptacion));
+  return lista.find(c => !c.revocado) || null;
+}
+
+export async function registrarConsentimientoPaciente(p, registradoPorNombre) {
+  const nuevo = {
+    id: 'cons_' + Date.now(),
+    version_documento: CONSENTIMIENTO_VERSION_ACTUAL,
+    aceptado: true,
+    fecha_aceptacion: new Date().toISOString(),
+    registrado_por_nombre: registradoPorNombre,
+    revocado: false,
+  };
+  if (IS_DEMO) {
+    if (!p.consentimientos) p.consentimientos = [];
+    p.consentimientos.unshift(nuevo);
+    return nuevo;
+  }
+  const { data, error } = await supabaseClient
+    .from('consentimientos')
+    .insert({ paciente_id: p.id, version_documento: nuevo.version_documento, aceptado: true })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function revocarConsentimientoPaciente(p, motivo) {
+  const vigente = getConsentimientoVigente(p);
+  if (!vigente) return null;
+  if (IS_DEMO) {
+    vigente.revocado = true;
+    vigente.fecha_revocacion = new Date().toISOString();
+    vigente.motivo_revocacion = motivo;
+    return vigente;
+  }
+  // Se agrega una fila de revocación en vez de modificar la original
+  const { data, error } = await supabaseClient
+    .from('consentimientos')
+    .insert({ paciente_id: p.id, version_documento: vigente.version_documento, aceptado: false, revocado: true, motivo_revocacion: motivo })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 export async function getAuditoria() {
