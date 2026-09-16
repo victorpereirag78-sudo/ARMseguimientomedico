@@ -375,9 +375,25 @@ CREATE TRIGGER trg_config_alertas_updated_at BEFORE UPDATE ON public.config_aler
 -- ──────────────────────────────────────────────
 -- TRIGGER: Crear profile al registrar usuario
 -- ──────────────────────────────────────────────
+-- El proyecto de Supabase es compartido con otras apps (Mi Vehículo,
+-- MiFran, ARM Mascotas, Drive, Emprendedores), cada una con su propio
+-- trigger en auth.users. Sin el candado de abajo, CUALQUIER registro en
+-- CUALQUIERA de esas apps también creaba acá un profile (role
+-- 'paciente') para gente que nunca abrió esta app — de hecho, HOY esta
+-- app no tiene ningún formulario de registro propio (solo login), así
+-- que TODAS las filas actuales de `profiles` vinieron de otras apps.
+--
+-- Si en el futuro se agrega un registro/invitación real para esta app,
+-- ese flujo debe mandar {"producto": "medico"} en los metadatos del
+-- usuario (options.data en supabase.auth.signUp(), o user_metadata al
+-- invitar desde el dashboard) para que este trigger actúe.
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+  IF coalesce(NEW.raw_user_meta_data->>'producto', '') <> 'medico' THEN
+    RETURN NEW;
+  END IF;
+
   INSERT INTO public.profiles (id, role, nombre_completo, email)
   VALUES (
     NEW.id,
